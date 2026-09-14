@@ -50,6 +50,14 @@ jobs:
           set -euxo pipefail
           cd "$GITHUB_WORKSPACE"
           git config --global --add safe.directory "$(pwd)"
+          git config --global core.autocrlf false
+
+          # Fork checkouts may not expose FerretDB's release tags to the runner.
+          # Version generation uses `git describe`, so make the upstream tags explicit.
+          if ! git describe --tags --always >/dev/null 2>&1; then
+            git fetch --force --tags https://github.com/FerretDB/FerretDB.git
+          fi
+          git describe --tags --always
 
           if ! command -v wget >/dev/null 2>&1; then
             sudo apt-get update
@@ -61,6 +69,8 @@ jobs:
           wget -q "https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz" -O /tmp/go.tar.gz
           tar -xzf /tmp/go.tar.gz -C "$HOME/.local"
           export PATH="$HOME/.local/go/bin:$PATH"
+          export GOPROXY="https://proxy.golang.org"
+          export GOTOOLCHAIN=local
 
           go version
           (cd tools && go generate -x)
@@ -72,6 +82,8 @@ jobs:
           set -euxo pipefail
           cd "$GITHUB_WORKSPACE"
           export PATH="$HOME/.local/go/bin:$PATH"
+          export GOPROXY="https://proxy.golang.org"
+          export GOTOOLCHAIN=local
           bin/task init
 
       - name: Run short unit tests
@@ -80,6 +92,8 @@ jobs:
           set -euxo pipefail
           cd "$GITHUB_WORKSPACE"
           export PATH="$HOME/.local/go/bin:$PATH"
+          export GOPROXY="https://proxy.golang.org"
+          export GOTOOLCHAIN=local
           bin/task test-unit-short TEST_TIMEOUT=10m
 
       - name: Check working tree
