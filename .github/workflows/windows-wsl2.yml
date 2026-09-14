@@ -52,11 +52,6 @@ jobs:
             sudo apt-get install -y wget ca-certificates
           fi
 
-          if ! command -v tar >/dev/null 2>&1; then
-            sudo apt-get update
-            sudo apt-get install -y tar
-          fi
-
           rm -rf "$HOME/.local/go"
           mkdir -p "$HOME/.local"
           wget -q "https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz" -O /tmp/go.tar.gz
@@ -64,9 +59,8 @@ jobs:
           export PATH="$HOME/.local/go/bin:$PATH"
 
           go version
-          go generate -x
+          (cd tools && go generate -x)
           bin/task --version
-        working-directory: .
 
       - name: Initialize project
         shell: wsl-run {0}
